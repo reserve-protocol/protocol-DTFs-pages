@@ -1,0 +1,43 @@
+name: Validate PR
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+    
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check modified files
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Get current PR number
+            const prNumber = context.payload.pull_request.number;
+            
+            // Retrieve the list of changed files in this PR
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            // We require EXACTLY 1 modified file
+            if (files.length !== 1) {
+              core.setFailed(`This PR modifies ${files.length} files. Exactly 1 file must be modified.`);
+              return;
+            }
+            
+            // Check if the modified file is within the 'projects/' folder
+            const changedFile = files[0].filename;
+            if (!changedFile.startsWith("projects/")) {
+              core.setFailed(`The modified file ("${changedFile}") is not in the 'projects/' folder.`);
+              return;
+            }
+            
+            // If we get here, everything is OK
+            core.notice(`Validation successful. Modified file: ${changedFile}`);

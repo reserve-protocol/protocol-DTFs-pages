@@ -144,6 +144,7 @@ jobs:
         with:
           repository: reserve-protocol/protocol-docs-website   # <-- tu repo privado
           path: private-repo
+          ref: draft
           token: ${{ secrets.GITHUB_TOKEN }}
 
       #######################################################################
